@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
+  "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
 
@@ -64,3 +64,14 @@ app.post("/urls", (req, res) => {
   urlDatabase[shortURL] = longURL; 
   res.redirect(`/urls/${shortURL}`);
 });  
+
+app.get("/u/:id", (req, res) => {
+  const shortURL = req.params.id; 
+  const longURL = urlDatabase[shortURL]; 
+
+  if (!longURL) {
+    return res.status(404).send("URL not found."); 
+  }
+
+  res.redirect(longURL);
+});
