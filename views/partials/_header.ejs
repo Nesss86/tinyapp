@@ -19,21 +19,19 @@
       </div>
 
       <% if (username) { %>
+        
         <span class="navbar-text text-light">
           Welcome, <%= username %>!
         </span>
-        <!-- Logout Form -->
-        <form method="POST" action="/logout" class="d-flex align-items-center ml-2">
-          <button type="submit" class="btn btn-danger btn-sm">Logout</button>
-        </form>
-      <% } else { %>
-        <!-- Login Form -->
         <div class="ml-auto">
-          <form 
-            method="POST" 
-            action="/login" 
-            class="d-flex align-items-center"
-          >
+          <form method="POST" action="/logout">
+            <button type="submit" class="btn btn-danger btn-sm">Log Out</button>
+          </form>
+        </div>
+      <% } else { %>
+        
+        <div class="ml-auto">
+          <form method="POST" action="/login" class="d-flex align-items-center">
             <input
               type="text"
               name="username"
@@ -48,3 +46,4 @@
     </div>
   </nav>
 </header>
+

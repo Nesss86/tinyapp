@@ -40,10 +40,10 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"], // Fetch username from cookies
-    urls: urlDatabase,
+    username: req.cookies["username"], 
+    urls: urlDatabase
   };
-  res.render("urls_index", templateVars);  // Pass username and urls to the EJS view
+  res.render("urls_index", templateVars); 
 });
 
 app.get("/urls/new", (req, res) => {
@@ -97,5 +97,10 @@ app.post('/urls/:id', (req, res) => {
 app.post('/login', (req, res) => {
   const { username } = req.body;
   res.cookie('username', username);
+  res.redirect('/urls');
+});
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('username');  
   res.redirect('/urls');
 });
