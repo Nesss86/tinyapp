@@ -17,8 +17,8 @@
     <title>TinyApp</title>
   </head>
   <body>
-    <!-- Include Header Partial -->
-    <%- include('partials/_header') %> 
+    <!-- Include Header Partial with username passed in -->
+    <%- include('partials/_header', { username: username }) %> 
 
     <main style="margin: 1em;">
       <h3>My URLs</h3>

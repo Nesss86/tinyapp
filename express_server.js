@@ -11,7 +11,7 @@ function generateRandomString() {
     randomString += characters[randomIndex];
   }
   return randomString;
-}  
+}
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -39,12 +39,16 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
-  res.render("urls_index", templateVars);
+  const templateVars = {
+    username: req.cookies["username"], // Fetch username from cookies
+    urls: urlDatabase,
+  };
+  res.render("urls_index", templateVars);  // Pass username and urls to the EJS view
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { username: req.cookies["username"] };
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -71,7 +75,7 @@ app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[shortURL]; 
 
   if (!longURL) {
-    return res.status(404).send("URL not found."); 
+    return res.status(404).send("URL not found.");
   }
 
   res.redirect(longURL);
@@ -91,7 +95,6 @@ app.post('/urls/:id', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  
   const { username } = req.body;
   res.cookie('username', username);
   res.redirect('/urls');

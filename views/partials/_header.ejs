@@ -17,23 +17,34 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
-      <!-- Spacer to push the form to the right -->
-      <div class="ml-auto">
-        <form 
-          method="POST" 
-          action="/login" 
-          class="d-flex align-items-center"
-        >
-          <input
-            type="text"
-            name="username"
-            placeholder="Username"
-            class="form-control me-2"
-            style="width: auto;"
-          />  
-          <button type="submit" class="btn btn-success btn-sm">Login</button>
+
+      <% if (username) { %>
+        <span class="navbar-text text-light">
+          Welcome, <%= username %>!
+        </span>
+        <!-- Logout Form -->
+        <form method="POST" action="/logout" class="d-flex align-items-center ml-2">
+          <button type="submit" class="btn btn-danger btn-sm">Logout</button>
         </form>
-      </div>
+      <% } else { %>
+        <!-- Login Form -->
+        <div class="ml-auto">
+          <form 
+            method="POST" 
+            action="/login" 
+            class="d-flex align-items-center"
+          >
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              class="form-control me-2"
+              style="width: auto;"
+            />  
+            <button type="submit" class="btn btn-success btn-sm">Login</button>
+          </form>
+        </div>
+      <% } %>
     </div>
   </nav>
 </header>
