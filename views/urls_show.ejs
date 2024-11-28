@@ -22,19 +22,19 @@
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
         </p>
 
-        <h3>Edit URL</h3>
-        <form method="POST" action="/urls/<%= id %>">
-          <div class="form-group">
-            <label for="longURL">Long URL</label>
+        <h3>Edit</h3>
+        <div class="d-flex justify-content-center mt-4">
+        <form method="POST" action="/urls/<%= id %>" class="d-flex align-items-center">
+            <label for="longURL">New URL</label>
             <input
               type="text"
-              class="form-control"
+              class="form-control me-2"
               id="longURL"
               name="longURL"
-              value="<%= longURL %>" <!-- Prefill the existing long URL -->
-            />
-          </div>
-          <button type="submit" class="btn btn-primary">Update</button>
+              value="<%= longURL %>"
+              style="width: auto;"
+          /> 
+          <button type="submit" class="btn btn-primary">Submit</button>
         </form>
       </div>
       <div class="card-footer text-muted"></div>
