@@ -3,6 +3,19 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080; // default port 8080
 
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "[email protected]",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "[email protected]",
+    password: "dishwasher-funk",
+  },
+};
+
 function generateRandomString() {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let randomString = "";
@@ -39,9 +52,12 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  const userId = req.cookies["user_id"];
+  const username = userId ? users[userId].email : null;
+
   const templateVars = {
-    username: req.cookies["username"], 
-    urls: urlDatabase
+    username: username, 
+    urls: urlDatabase,
   };
   res.render("urls_index", templateVars); 
 });
@@ -59,7 +75,10 @@ app.get("/urls/:id", (req, res) => {
     return res.status(404).send("URL not found.");
   }
 
-  const templateVars = { id, longURL };
+  const userId = req.cookies["user_id"];
+  const username = userId ? users[userId].email: null;
+
+  const templateVars = { id, longURL, username };
   res.render("urls_show", templateVars);
 });
 
@@ -107,4 +126,31 @@ app.post('/logout', (req, res) => {
 
 app.get("/register", (req, res) => {
   res.render("register");
+});
+
+app.post("/register", (req, res) => {
+  const { email, password } = req.body;
+
+  
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      
+      return res.status(400).send("Email is already registered.");
+    }
+  }
+
+  const userID = generateRandomString();
+
+  
+  users[userID] = {
+    id: userID,
+    email: email,
+    password: password,
+  };
+
+  
+  console.log(users);
+
+  res.cookie('user_id', userID);
+  res.redirect("/urls");
 });
