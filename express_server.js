@@ -26,6 +26,16 @@ function generateRandomString() {
   return randomString;
 }
 
+function getUserByEmail(email) {
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return null; 
+}
+
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.set("view engine", "ejs");
@@ -131,24 +141,22 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
 
-  
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      
-      return res.status(400).send("Email is already registered.");
-    }
+  if (!email || !password) {
+    return res.status(400).send("Email and password cannot be empty.");
   }
-
+ 
+  if (getUserByEmail(email)) {
+    return res.status(400).send("Email is already registered.");
+  }
+  
   const userID = generateRandomString();
 
-  
   users[userID] = {
     id: userID,
     email: email,
     password: password,
   };
 
-  
   console.log(users);
 
   res.cookie('user_id', userID);
