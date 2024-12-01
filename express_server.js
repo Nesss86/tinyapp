@@ -39,6 +39,8 @@ function getUserByEmail(email) {
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.set("view engine", "ejs");
+app.use(express.static('public'));
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -63,17 +65,24 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const userId = req.cookies["user_id"];
-  const username = userId ? users[userId].email : null;
+  const username = userId && users[userId] ? users[userId].email : null;  // Added safe check
 
   const templateVars = {
-    username: username, 
+    username: username,
     urls: urlDatabase,
   };
   res.render("urls_index", templateVars); 
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const userId = req.cookies["user_id"];  // Get user_id from cookies
+  if (!userId || !users[userId]) {  // Add a check for undefined user
+    return res.redirect('/login');  // Redirect to login if no user_id cookie exists or user doesn't exist
+  }
+
+  const username = users[userId].email; // Safe to access now that we checked users[userId]
+
+  const templateVars = { username: username };
   res.render("urls_new", templateVars);
 });
 
@@ -86,11 +95,20 @@ app.get("/urls/:id", (req, res) => {
   }
 
   const userId = req.cookies["user_id"];
-  const username = userId ? users[userId].email: null;
+  console.log('User ID from cookie:', userId);
+
+  // Check if the userId exists and if the user is in the users object
+  const user = userId ? users[userId] : null;
+  console.log('Retrieved user:', user);
+
+  // If user is found, get email, otherwise set username to null
+  const username = user ? user.email : null;
 
   const templateVars = { id, longURL, username };
   res.render("urls_show", templateVars);
 });
+
+
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString(); 
@@ -119,15 +137,31 @@ app.post('/urls/:id/delete', (req, res) => {
 app.post('/urls/:id', (req, res) => {
   const id = req.params.id;          
   const newLongURL = req.body.longURL; 
-  urlDatabase[id] = newLongURL;      
-  res.redirect('/urls');
+  urls[id] = newLongURL;      
+  res.redirect(`/urls/${id}`);
 });
 
 app.post('/login', (req, res) => {
-  const { username } = req.body;
-  res.cookie('username', username);
+  console.log(req.body);
+
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).send("Email and password are required.");
+  }
+
+  const user = getUserByEmail(email);
+
+  if (!user || user.password !== password) {
+    return res.status(403).send("Invalid email or password.");
+  }
+
+  res.cookie('user_id', user.id);  // Only set user_id here
+
+  console.log(req.cookies); // Log the cookies to check if 'user_id' is set
   res.redirect('/urls');
 });
+
 
 app.post('/logout', (req, res) => {
   res.clearCookie('username');  
@@ -161,4 +195,8 @@ app.post("/register", (req, res) => {
 
   res.cookie('user_id', userID);
   res.redirect("/urls");
+});
+
+app.get('/login', (req, res) => {
+  res.render('login');
 });

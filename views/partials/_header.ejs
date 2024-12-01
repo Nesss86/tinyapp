@@ -29,18 +29,9 @@
           </form>
         </div>
       <% } else { %>
-        
         <div class="ml-auto">
-          <form method="POST" action="/login" class="d-flex align-items-center">
-            <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              class="form-control me-2"
-              style="width: auto;"
-            />  
-            <button type="submit" class="btn btn-success btn-sm">Login</button>
-          </form>
+          <a href="/register" class="btn btn-primary btn-sm me-2">Register</a>
+          <a href="/login" class="btn btn-success btn-sm">Login</a>
         </div>
       <% } %>
     </div>
