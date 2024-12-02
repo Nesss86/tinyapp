@@ -1,5 +1,6 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 8080; // Default port 8080
 
@@ -8,12 +9,12 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: bcrypt.hashSync("purple-monkey-dinosaur", 10), // Hashed password
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: bcrypt.hashSync("dishwasher-funk", 10), // Hashed password
   },
 };
 
@@ -146,27 +147,28 @@ app.post('/urls/:id', (req, res) => {
   res.redirect(`/urls/${id}`);
 });
 
-app.post("/login", (req, res) => {
+app.post('/login', (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).send("Email and password are required.");
+  // Find the user by email
+  let foundUser = null;
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      foundUser = users[userId];
+      break;
+    }
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return res.status(400).send("Please provide a valid email address.");
+  // If user is not found or password is incorrect, send error
+  if (!foundUser || !bcrypt.compareSync(password, foundUser.password)) {
+    return res.status(403).send('Invalid email or password.');
   }
 
-  const user = getUserByEmail(email);
-
-  if (!user || user.password !== password) {
-    return res.status(401).send("Invalid email or password.");
-  }
-
-  res.cookie("user_id", user.id);  // Set user_id cookie
-  res.redirect("/urls");
+  // Log the user in by setting a cookie
+  res.cookie('user_id', foundUser.id);
+  res.redirect('/urls');
 });
+
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");  // Clear the user_id cookie
@@ -177,6 +179,41 @@ app.get('/register', (req, res) => {
   const userId = req.cookies.user_id;  // Retrieve user_id from cookie
   const userEmail = userId ? users[userId]?.email : '';  // Get the user's email from users database if user_id exists
   res.render('register', { userEmail: userEmail });
+});
+
+const bcrypt = require('bcryptjs'); // Add bcryptjs for password hashing
+
+app.post('/register', (req, res) => {
+  const { email, password } = req.body;
+
+  // Check if email and password are provided
+  if (!email || !password) {
+    return res.status(400).send('Email and password cannot be empty!');
+  }
+
+  // Check if the email already exists
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return res.status(400).send('Email already registered.');
+    }
+  }
+
+  // Generate a random user ID
+  const userId = `user${Math.floor(Math.random() * 1000)}`;
+
+  // Hash the password
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
+  // Add the user to the database
+  users[userId] = {
+    id: userId,
+    email,
+    password: hashedPassword,
+  };
+
+  // Log the user in by setting a cookie
+  res.cookie('user_id', userId);
+  res.redirect('/urls');
 });
 
 
