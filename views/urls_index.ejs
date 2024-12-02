@@ -12,8 +12,8 @@
     <title>TinyApp</title>
   </head>
   <body>
-    <!-- Include Header Partial with username passed in -->
-    <%- include('partials/_header', { username: username }) %> 
+    <!-- Include Header Partial with userEmail passed in -->
+    <%- include('partials/_header', { userEmail: userEmail }) %> 
 
     <main style="margin: 1em;">
       <h3>My URLs</h3>
@@ -44,31 +44,21 @@
       <a href="/urls/new" class="btn btn-primary mt-3">Shorten a New URL</a>
     </main>
 
-    <!-- Bootstrap CSS (version 4.2.1) -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" 
-          integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" 
-          crossorigin="anonymous">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" 
+            integrity="sha384-Q6E2Wf9nI7MEeS8+XtuRbxj5V2m/M3o7E8ThqC0/vRZf5FLp8G1sWQAI4V+eD47y" 
+            crossorigin="anonymous"></script>
 
-<!-- jQuery -->
-<script
-src="https://code.jquery.com/jquery-3.3.1.min.js"
-integrity="sha384-Q6E2Wf9nI7MEeS8+XtuRbxj5V2m/M3o7E8ThqC0/vRZf5FLp8G1sWQAI4V+eD47y"
-crossorigin="anonymous"
-></script>
+    <!-- Popper.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" 
+            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" 
+            crossorigin="anonymous"></script>
 
-<!-- Popper.js -->
-<script
-src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-crossorigin="anonymous"
-></script>
-
-<!-- Bootstrap JS (version 4.2.1) -->
-<script 
-src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.bundle.min.js" 
-integrity="sha384-zDnhMsjVZfS3hiP7oCBRmfjkQC4fzxVxFhBx8Hkz2aZX8gEvA/jsP3eXRCvzTofP" 
-crossorigin="anonymous">
-</script>
+    <!-- Bootstrap JS (version 4.2.1) -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.bundle.min.js" 
+            integrity="sha384-zDnhMsjVZfS3hiP7oCBRmfjkQC4fzxVxFhBx8Hkz2aZX8gEvA/jsP3eXRCvzTofP" 
+            crossorigin="anonymous"></script>
   </body>
 </html>
+
 

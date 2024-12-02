@@ -9,26 +9,24 @@
       aria-controls="navbarNavAltMarkup"
       aria-expanded="false"
       aria-label="Toggle navigation"
-    >
-      <span class="navbar-toggler-icon"></span>
-    </button>
+    ></button>
+    <span class="navbar-toggler-icon"></span>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
 
-      <% if (username) { %>
-        
+      <% if (userEmail) { %> <!-- Check if userEmail exists -->
         <span class="navbar-text text-light">
-          Welcome, <%= username %>!
+          Welcome, <%= userEmail %>! <!-- Display the user email -->
         </span>
         <div class="ml-auto">
           <form method="POST" action="/logout">
             <button type="submit" class="btn btn-danger btn-sm">Log Out</button>
           </form>
         </div>
-      <% } else { %>
+      <% } else { %> <!-- If no userEmail (logged out) -->
         <div class="ml-auto">
           <a href="/register" class="btn btn-primary btn-sm me-2">Register</a>
           <a href="/login" class="btn btn-success btn-sm">Login</a>
@@ -37,4 +35,5 @@
     </div>
   </nav>
 </header>
+
 
