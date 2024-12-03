@@ -303,6 +303,8 @@ app.post('/register', (req, res) => {
     password: hashedPassword,
   };
 
+  console.log(users);
+
   // Log the user in by setting a cookie
   res.cookie('user_id', userId);
   res.redirect('/urls');
