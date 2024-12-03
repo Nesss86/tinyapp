@@ -205,10 +205,31 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.post('/urls/:id/delete', (req, res) => {
-  const id = req.params.id;
-  delete urlDatabase[id]; 
+  const shortURL = req.params.id;
+  const userId = req.cookies.user_id;
+
+  
+  if (!userId || !users[userId]) {
+    return res.status(401).send('You must be logged in to delete URLs.');
+  }
+
+  const urlEntry = urlDatabase[shortURL];
+
+  
+  if (!urlEntry) {
+    return res.status(404).send('URL not found.');
+  }
+
+  
+  if (urlEntry.userId !== userId) {
+    return res.status(403).send('You do not have permission to delete this URL.');
+  }
+
+  
+  delete urlDatabase[shortURL];
   res.redirect('/urls');
 });
+
 
 app.post('/urls/:id', (req, res) => {
   const id = req.params.id;          
