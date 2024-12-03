@@ -49,6 +49,7 @@ app.use(cookieParser());
 app.set("view engine", "ejs");
 app.use(express.static('public'));
 
+
 // Middleware to assign userEmail to res.locals
 app.use((req, res, next) => {
   const userId = req.cookies["user_id"];
@@ -56,10 +57,18 @@ app.use((req, res, next) => {
   next();
 });
 
+const checkLogin = (req, res, next) => {
+  const userId = req.cookies.user_id;
+  if (!userId || !users[userId]) {
+    return res.redirect('/login');
+  }
+  next();
+};
+
 // URL database
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b2xVn2: { longURL: "http://www.lighthouselabs.ca", userId: "userRandomID" },
+  "9sm5xK": { longURL: "http://www.google.com", userId: "user2RandomID" },
 };
 
 app.get("/", (req, res) => {
@@ -116,19 +125,34 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString(); 
-  const longURL = req.body.longURL; 
-  urlDatabase[shortURL] = longURL; 
+app.post('/urls', (req, res) => {
+  const userId = req.cookies.user_id;
+  if (!userId || !users[userId]) {
+    return res.status(401).send('<h1>Unauthorized</h1><p>You must log in to shorten URLs.</p>');
+  }
+
+  // Add new URL to the database
+  const shortURL = generateRandomString();
+  const longURL = req.body.longURL;
+  urlDatabase[shortURL] = { longURL, userId }; // Save userId to associate URL with a user
   res.redirect(`/urls/${shortURL}`);
-});  
+});
 
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id; 
   const longURL = urlDatabase[shortURL]; 
 
   if (!longURL) {
-    return res.status(404).send("URL not found.");
+    return res.status(404).send(`
+      <html>
+        <head><title>URL Not Found</title></head>
+        <body>
+          <h1>404 - URL Not Found</h1>
+          <p>The short URL you are trying to access does not exist. Please check the URL and try again.</p>
+          <a href="/urls">Go back to your URLs</a>
+        </body>
+      </html>
+    `);
   }
 
   res.redirect(longURL);
@@ -176,12 +200,13 @@ app.post("/logout", (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-  const userId = req.cookies.user_id;  // Retrieve user_id from cookie
-  const userEmail = userId ? users[userId]?.email : '';  // Get the user's email from users database if user_id exists
-  res.render('register', { userEmail: userEmail });
+  const userId = req.cookies.user_id;
+  if (userId && users[userId]) {
+    return res.redirect('/urls'); // Redirect if user is logged in
+  }
+  const userEmail = userId ? users[userId]?.email : null;
+  res.render('register', { userEmail });
 });
-
-const bcrypt = require('bcryptjs'); // Add bcryptjs for password hashing
 
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
@@ -217,11 +242,11 @@ app.post('/register', (req, res) => {
 });
 
 
-app.get("/login", (req, res) => {
-  try {
-    res.render("login");
-  } catch (error) {
-    console.error("Error rendering login page:", error);
-    res.status(500).send("Internal Server Error");
+app.get('/login', (req, res) => {
+  const userId = req.cookies.user_id;
+  if (userId && users[userId]) {
+    return res.redirect('/urls'); // Redirect if user is logged in
   }
+  res.render('login');
 });
+
