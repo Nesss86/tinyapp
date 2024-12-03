@@ -44,6 +44,16 @@ function getUserById(id) {
   return users[id] || null; // Returns user if found, otherwise null
 }
 
+function urlsForUser(id) {
+  const userUrls = {};
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      userUrls[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return userUrls;
+}
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.set("view engine", "ejs");
@@ -109,21 +119,57 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  const urlEntry = urlDatabase[id];
-
-  if (!urlEntry) {
-    return res.status(404).send("URL not found.");
-  }
-
   const userId = req.cookies["user_id"];
+  const shortURL = req.params.id;
+  const urlEntry = urlDatabase[shortURL];
+
+  // Check if user is logged in
   if (!userId || !users[userId]) {
-    return res.status(401).send("You must be logged in to view this URL.");
+    return res.status(401).send(`
+      <html>
+        <head><title>Unauthorized</title></head>
+        <body>
+          <h1>401 - Unauthorized</h1>
+          <p>You must be logged in to view this page.</p>
+          <a href="/login">Log in</a>
+        </body>
+      </html>
+    `);
   }
 
-  const templateVars = { id, longURL: urlEntry, userEmail: res.locals.userEmail };
+  // Check if URL exists
+  if (!urlEntry) {
+    return res.status(404).send(`
+      <html>
+        <head><title>URL Not Found</title></head>
+        <body>
+          <h1>404 - URL Not Found</h1>
+          <p>The URL you are trying to access does not exist.</p>
+          <a href="/urls">Go back to your URLs</a>
+        </body>
+      </html>
+    `);
+  }
+
+  // Check if URL belongs to the logged-in user
+  if (urlEntry.userID !== userId) {
+    return res.status(403).send(`
+      <html>
+        <head><title>Forbidden</title></head>
+        <body>
+          <h1>403 - Forbidden</h1>
+          <p>You do not have permission to access this URL.</p>
+          <a href="/urls">Go back to your URLs</a>
+        </body>
+      </html>
+    `);
+  }
+
+  // Render the URL details page
+  const templateVars = { id: shortURL, longURL: urlEntry.longURL, userEmail: users[userId].email };
   res.render("urls_show", templateVars);
 });
+
 
 app.post('/urls', (req, res) => {
   const userId = req.cookies.user_id;
