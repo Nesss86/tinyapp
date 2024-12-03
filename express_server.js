@@ -54,6 +54,25 @@ function urlsForUser(id) {
   return userUrls;
 }
 
+function hashPassword(password) {
+  try {
+    return bcrypt.hashSync(password, 10);
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    throw new Error('HashingError');
+  }
+}
+
+function comparePasswords(plainPassword, hashedPassword) {
+  try {
+    return bcrypt.compareSync(plainPassword, hashedPassword);
+  } catch (error) {
+    console.error('Error comparing passwords:', error);
+    throw new Error('ComparisonError');
+  }
+}
+
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.set("view engine", "ejs");
@@ -241,8 +260,11 @@ app.post('/urls/:id', (req, res) => {
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
 
-  // Find the user by email
-  let foundUser = null;
+  if (!email || !password) {
+    return res.status(400).send('Email and password cannot be empty!');
+  }
+
+  let foundUser;
   for (const userId in users) {
     if (users[userId].email === email) {
       foundUser = users[userId];
@@ -250,12 +272,21 @@ app.post('/login', (req, res) => {
     }
   }
 
-  // If user is not found or password is incorrect, send error
-  if (!foundUser || !bcrypt.compareSync(password, foundUser.password)) {
+  if (!foundUser) {
     return res.status(403).send('Invalid email or password.');
   }
 
-  // Log the user in by setting a cookie
+  let isPasswordCorrect;
+  try {
+    isPasswordCorrect = comparePasswords(password, foundUser.password); // Use helper function
+  } catch (error) {
+    return res.status(500).send('An error occurred while processing your request.');
+  }
+
+  if (!isPasswordCorrect) {
+    return res.status(403).send('Invalid email or password.');
+  }
+
   res.cookie('user_id', foundUser.id);
   res.redirect('/urls');
 });
@@ -278,25 +309,24 @@ app.get('/register', (req, res) => {
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
 
-  // Check if email and password are provided
   if (!email || !password) {
     return res.status(400).send('Email and password cannot be empty!');
   }
 
-  // Check if the email already exists
   for (const userId in users) {
     if (users[userId].email === email) {
       return res.status(400).send('Email already registered.');
     }
   }
 
-  // Generate a random user ID
+  let hashedPassword;
+  try {
+    hashedPassword = hashPassword(password); // Use helper function
+  } catch (error) {
+    return res.status(500).send('An error occurred while processing your request.');
+  }
+
   const userId = `user${Math.floor(Math.random() * 1000)}`;
-
-  // Hash the password
-  const hashedPassword = bcrypt.hashSync(password, 10);
-
-  // Add the user to the database
   users[userId] = {
     id: userId,
     email,
@@ -305,10 +335,14 @@ app.post('/register', (req, res) => {
 
   console.log(users);
 
-  // Log the user in by setting a cookie
+
   res.cookie('user_id', userId);
   res.redirect('/urls');
 });
+
+
+  
+
 
 
 app.get('/login', (req, res) => {
