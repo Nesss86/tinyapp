@@ -1,217 +1,186 @@
 const express = require("express");
-const cookieSession = require('cookie-session');
-const bcrypt = require('bcryptjs');
+const session = require("express-session");
+const bcrypt = require("bcryptjs");
+const {
+  getUserByEmail,
+  getUserById,
+  urlsForUser,
+  hashPassword,
+  comparePasswords,
+  generateRandomString,
+  users,
+  urlDatabase  // Import urlDatabase
+} = require("./helpers");
+
 const app = express();
-const PORT = 8080; // Default port 8080
-require('dotenv').config();
+const PORT = 8080;
 
-// Users database
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: bcrypt.hashSync("purple-monkey-dinosaur", 10), // Hashed password
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: bcrypt.hashSync("dishwasher-funk", 10), // Hashed password
-  },
-};
-
-// Helper functions
-function generateRandomString() {
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let randomString = "";
-  for (let i = 0; i < 6; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    randomString += characters[randomIndex];
-  }
-  return randomString;
-}
-
-// Optimized getUserByEmail function
-function getUserByEmail(email) {
-  return Object.values(users).find(user => user.email === email) || null;
-}
-
-function getUserById(id) {
-  return users[id] || null;
-}
-
-function urlsForUser(id) {
-  const userUrls = {};
-  for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userId === id) {
-      userUrls[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return userUrls;
-}
-
-function hashPassword(password) {
-  try {
-    return bcrypt.hashSync(password, 10);
-  } catch (error) {
-    console.error('Error hashing password:', error);
-    throw new Error('HashingError');
-  }
-}
-
-function comparePasswords(plainPassword, hashedPassword) {
-  try {
-    return bcrypt.compareSync(plainPassword, hashedPassword);
-  } catch (error) {
-    console.error('Error comparing passwords:', error);
-    throw new Error('ComparisonError');
-  }
-}
-
-app.use(express.urlencoded({ extended: true }));
-app.use((req, res, next) => {
-  try {
-    app.use(cookieSession({
-      name: 'session',
-      keys: [process.env.COOKIE_SECRET], // Use environment variable for secret keys
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }));
-    next(); // Proceed to the next middleware
-  } catch (error) {
-    console.error("Session Error: ", error);
-    res.status(500).send("There was an issue with session handling.");
-  }
-});
+// Set the view engine to EJS
 app.set("view engine", "ejs");
-app.use(express.static('public'));
 
-// Middleware to assign userEmail to res.locals
-app.use((req, res, next) => {
-  const userId = req.session.user_id; // Updated for cookie-session
-  res.locals.userEmail = userId ? users[userId]?.email : null;
-  next();
-});
+// Body parser for form data
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-const checkLogin = (req, res, next) => {
-  const userId = req.session.user_id; // Updated for cookie-session
-  if (!userId || !users[userId]) {
-    return res.redirect('/login');
+// Session configuration
+app.use(
+  session({
+    secret: "a secret key",  // It's good practice to use an actual secret key in production
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+
+// Middleware to check if user is logged in
+const checkUserLoggedIn = (req, res, next) => {
+  if (!req.session.user_id) {
+    return res.redirect("/login");
   }
   next();
 };
 
-// URL database
-const urlDatabase = {
-  b2xVn2: { longURL: "http://www.lighthouselabs.ca", userId: "userRandomID" },
-  "9sm5xK": { longURL: "http://www.google.com", userId: "user2RandomID" },
+// Middleware to attach user info to the response object
+const setUserInfo = (req, res, next) => {
+  if (req.session.user_id) {
+    res.locals.user = getUserById(req.session.user_id);  // Add user info to response locals
+  }
+  next();
 };
 
+// Use the middleware
+app.use(setUserInfo);
+
+// Routes
+
+// Home page route
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect("/urls");
 });
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+// Show the "Create New URL" page
+app.get("/urls/new", checkUserLoggedIn, (req, res) => {
+  res.render("urls_new", { userEmail: res.locals.user.email });
 });
 
-app.get("/urls", (req, res) => {
-  const userId = req.session.user_id; // Updated for cookie-session
-  const user = getUserById(userId);
-  if (!user) {
-    return res.status(401).send("Please log in to view URLs.");
-  }
 
-  const urls = urlsForUser(userId); // Filter URLs for the logged-in user
-  res.render('urls_index', { urls });
+// Show URLs page
+app.get("/urls", checkUserLoggedIn, (req, res) => {
+  const userUrls = urlsForUser(req.session.user_id);  // Get URLs using helper function
+  res.render("urls_index", {
+    userEmail: res.locals.user.email, // Get email using the user info stored in locals
+    urls: userUrls
+  });
 });
 
-app.get("/urls/new", (req, res) => {
-  const userId = req.session.user_id; // Updated for cookie-session
-  if (!userId || !users[userId]) {
-    return res.redirect('/login');
-  }
-
-  res.render("urls_new", { userEmail: users[userId].email });
+// Show login page
+app.get("/login", (req, res) => {
+  res.render("login", { userEmail: res.locals.user ? res.locals.user.email : null });
 });
 
-app.post('/urls', (req, res) => {
-  const userId = req.session.user_id; // Updated for cookie-session
-  if (!userId || !users[userId]) {
-    return res.status(401).send('<h1>Unauthorized</h1><p>You must log in to shorten URLs.</p>');
-  }
-
-  const shortURL = generateRandomString();
-  urlDatabase[shortURL] = { longURL: req.body.longURL, userId }; // Associate URL with the logged-in user
-  res.redirect(`/urls/${shortURL}`);
+// Show registration page
+app.get("/register", (req, res) => {
+  res.render("register", { userEmail: res.locals.user ? res.locals.user.email : null });
 });
 
-app.post('/login', (req, res) => {
+// Register a new user
+app.post("/register", (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).send('Email and password cannot be empty!');
-  }
-
-  const foundUser = getUserByEmail(email);
-  if (!foundUser || !comparePasswords(password, foundUser.password)) {
-    return res.status(403).send('Invalid email or password.');
-  }
-
-  req.session.user_id = foundUser.id; // Updated for cookie-session
-  res.redirect('/urls');
-});
-
-app.post("/logout", (req, res) => {
-  req.session = null; // Clear session
-  res.redirect("/login");
-});
-
-app.post('/urls/:id/delete', (req, res) => {
-  const shortURL = req.params.id;
-  const userId = req.session.user_id; // Updated for cookie-session
-
-  if (!userId || !users[userId]) {
-    return res.status(401).send('You must be logged in to delete URLs.');
-  }
-
-  const urlEntry = urlDatabase[shortURL];
-  if (!urlEntry || urlEntry.userId !== userId) {
-    return res.status(403).send('You do not have permission to delete this URL.');
-  }
-
-  delete urlDatabase[shortURL];
-  res.redirect('/urls');
-});
-
-app.get('/login', (req, res) => {
-  const userId = req.session.user_id; // Updated for cookie-session
-  if (userId && users[userId]) {
-    return res.redirect('/urls');
-  }
-  res.render('login');
-});
-
-app.post('/register', (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).send('Email and password cannot be empty!');
-  }
-
+  // Check if email is already registered
   if (getUserByEmail(email)) {
-    return res.status(400).send('Email already registered.');
+    return res.status(400).send("Email already registered.");
   }
 
-  const userId = generateRandomString();
-  users[userId] = { id: userId, email, password: hashPassword(password) };
+  // Generate a new user ID
+  const newUserId = generateRandomString();
 
-  req.session.user_id = userId; // Updated for cookie-session
-  res.redirect('/urls');
+  // Hash the password before saving
+  const hashedPassword = hashPassword(password);
+
+  // Add new user to the users object
+  users[newUserId] = {
+    id: newUserId,
+    email: email,
+    password: hashedPassword,
+  };
+
+  // Set the session for the logged-in user
+  req.session.user_id = newUserId;
+
+  // Redirect to URLs page
+  res.redirect("/urls");
 });
 
-app.get('/register', (req, res) => {
-  const userId = req.session.user_id; // Updated for cookie-session
-  if (userId && users[userId]) {
-    return res.redirect('/urls');
+// Login route
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+
+  // Find user by email
+  const user = getUserByEmail(email);
+
+  // If no user found or invalid password, send error
+  if (!user || !comparePasswords(password, user.password)) {
+    return res.status(403).send("Invalid email or password.");
   }
-  res.render('register', { userEmail: null });
+
+  // Set the session with the user ID
+  req.session.user_id = user.id;
+
+  // Redirect to the URLs page after successful login
+  res.redirect("/urls");
 });
+
+// Logout route
+app.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).send("Error logging out.");
+    }
+    res.redirect("/login");
+  });
+});
+
+// URL show route
+app.get("/urls/:id", checkUserLoggedIn, (req, res) => {
+  const url = urlDatabase[req.params.id]; // Retrieve URL from the database
+  if (!url) {
+    return res.status(404).send("URL not found");
+  }
+
+  res.render("urls_show", { id: req.params.id, longURL: url.longURL });
+});
+
+// URL edit route
+app.post("/urls/:id", checkUserLoggedIn, (req, res) => {
+  const { longURL } = req.body;
+
+  const url = urlDatabase[req.params.id]; // Retrieve the URL from the database
+  if (!url || url.userId !== req.session.user_id) {
+    return res.status(403).send("You are not authorized to edit this URL.");
+  }
+
+  // Update URL in the database
+  url.longURL = longURL;
+
+  res.redirect("/urls");
+});
+
+// Add new URL (POST request)
+app.post("/urls", checkUserLoggedIn, (req, res) => {
+  const shortURL = generateRandomString(); // Generate new short URL
+  const { longURL } = req.body; // Get the long URL from the form
+
+  // Add the new URL to the database
+  urlDatabase[shortURL] = {
+    longURL: longURL,
+    userId: req.session.user_id
+  };
+
+  res.redirect("/urls");  // Redirect to URLs page after adding new URL
+});
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`TinyApp listening on port ${PORT}!`);
+});
+

@@ -4,8 +4,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TinyApp</title>
-    
-    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.2.1/dist/css/bootstrap.min.css">
   </head>
   <body>
@@ -28,16 +26,16 @@
             <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
           </div>
 
-          <% if (userEmail) { %> <!-- Check if userEmail exists -->
+          <% if (userEmail) { %>
             <span class="navbar-text text-light">
-              Welcome, <%= userEmail %>! <!-- Display the user email -->
+              Welcome, <%= userEmail %>!
             </span>
             <div class="ml-auto">
               <form method="POST" action="/logout">
                 <button type="submit" class="btn btn-danger btn-sm">Log Out</button>
               </form>
             </div>
-          <% } else { %> <!-- If no userEmail (logged out) -->
+          <% } else { %>
             <div class="ml-auto">
               <a href="/register" class="btn btn-primary btn-sm me-2">Register</a>
               <a href="/login" class="btn btn-success btn-sm">Login</a>
@@ -47,11 +45,7 @@
       </nav>
     </header>
 
-    <!-- jQuery  -->
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-
-    <!-- Bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.2.1/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
-
