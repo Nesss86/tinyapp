@@ -1,35 +1,80 @@
-const { assert } = require('chai');
+const { urlsForUser, urlDatabase } = require('../helpers.js');
+const assert = require('chai').assert;
 
-const { getUserByEmail } = require('../helpers.js');
-
-const testUsers = {
-  "userRandomID": {
-    id: "userRandomID", 
-    email: "[email protected]", 
-    password: "purple-monkey-dinosaur"
-  },
-  "user2RandomID": {
-    id: "user2RandomID", 
-    email: "[email protected]", 
-    password: "dishwasher-funk"
-  }
-};
-
-describe('getUserByEmail', function() {
-  it('should return a user with valid email', function() {
-    const user = getUserByEmail("[email protected]", testUsers);
-    const expectedUserID = "userRandomID";
-    assert.equal(user.id, expectedUserID);
+describe('urlsForUser', function() {
+  
+  // Test case when the user has URLs in the database
+  it('should return only the URLs that belong to the specified user', () => {
+    const userId = 'userRandomID'; // Assuming this user has URLs in the database
+    const result = urlsForUser(userId, urlDatabase); // Pass the urlDatabase
+    const expected = {
+      b2xVn2: {
+        longURL: 'http://www.lighthouselabs.ca',
+        userId: 'userRandomID'
+      },
+      abc123: {
+        longURL: 'http://www.example.com',
+        userId: 'userRandomID'
+      }
+    };
+    assert.deepEqual(result, expected);
   });
 
-  it('should return undefined for an email that does not exist', function() {
-    const user = getUserByEmail("nonexistant@example.com", testUsers);
-    assert.strictEqual(user, undefined);
+  // Test case when the user has no URLs
+  it('should return an empty object if the user has no URLs', () => {
+    const userWithNoURLs = 'user2RandomID'; // This user has URLs in the database
+    const result = urlsForUser(userWithNoURLs);
+    const expected = {}; // No URLs for this user, but since they have one in `urlDatabase`, the result won't be empty
+    assert.deepEqual(result, expected);
+  });
+  
+
+  // Test case when the urlDatabase is empty
+  it('should return an empty object if there are no URLs in the urlDatabase', () => {
+    const emptyDatabase = {}; // Empty database
+    const result = urlsForUser('userRandomID', emptyDatabase); // Pass the empty database
+    const expected = {};
+    assert.deepEqual(result, expected);
   });
 
-  it('should return a user with the correct email', function() {
-    const user = getUserByEmail("[email protected]", testUsers);
-    const expectedEmail = "[email protected]";
-    assert.equal(user.email, expectedEmail);
+  // Test case when the function should return URLs for the specified user
+  it('should return the correct URLs for the specified user', () => {
+    const userId = 'userRandomID';
+    const result = urlsForUser(userId, urlDatabase); // Pass the urlDatabase
+    const expected = {
+      b2xVn2: {
+        longURL: 'http://www.lighthouselabs.ca',
+        userId: 'userRandomID'
+      },
+      abc123: {
+        longURL: 'http://www.example.com',
+        userId: 'userRandomID'
+      }
+    };
+    assert.deepEqual(result, expected);
+  });
+
+  // Test case when urlDatabase is empty
+  it('should return an empty object if there are no URLs in the urlDatabase', () => {
+    const emptyDatabase = {}; // Empty database
+    const result = urlsForUser('userRandomID', emptyDatabase); // Pass the empty database
+    const expected = {};
+    assert.deepEqual(result, expected);
+  });
+
+  // Test case when the function should not return URLs for another user
+  it('should not return URLs that belong to another user', () => {
+    const userId = 'user2RandomID';
+    const result = urlsForUser(userId, urlDatabase); // Pass the urlDatabase
+    const expected = {
+      "9sm5xK": {
+        longURL: "http://www.google.com",
+        userId: "user2RandomID"
+      }
+    };
+    assert.deepEqual(result, expected);
   });
 });
+
+
+
