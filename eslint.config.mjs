@@ -15,7 +15,7 @@ export default [
       },
     },
     rules: {
-      // Specify rules here
+      
     },
   },
 ];

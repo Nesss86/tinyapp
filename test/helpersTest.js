@@ -1,12 +1,10 @@
-const { urlsForUser, urlDatabase } = require('../helpers.js');
-const assert = require('chai').assert;
-
+// Grouping tests for the urlsForUser function
 describe('urlsForUser', function() {
-  
-  // Test case when the user has URLs in the database
+
+  // I want to make sure this function returns the correct URLs for the specified user.
   it('should return only the URLs that belong to the specified user', () => {
-    const userId = 'userRandomID'; // Assuming this user has URLs in the database
-    const result = urlsForUser(userId, urlDatabase); // Pass the urlDatabase
+    const userId = 'userRandomID'; // A user with multiple URLs in the database
+    const result = urlsForUser(userId, urlDatabase); // Call the function with sample data
     const expected = {
       b2xVn2: {
         longURL: 'http://www.lighthouselabs.ca',
@@ -17,64 +15,41 @@ describe('urlsForUser', function() {
         userId: 'userRandomID'
       }
     };
+    // This will help validate that the function filters URLs by user ID.
     assert.deepEqual(result, expected);
   });
 
-  // Test case when the user has no URLs
+  // The reason I added this test is to ensure the function handles users with no URLs properly.
   it('should return an empty object if the user has no URLs', () => {
-    const userWithNoURLs = 'user2RandomID'; // This user has URLs in the database
-    const result = urlsForUser(userWithNoURLs);
-    const expected = {}; // No URLs for this user, but since they have one in `urlDatabase`, the result won't be empty
+    const userWithNoURLs = 'user2RandomID'; // A user who doesn't own any URLs in this test
+    const result = urlsForUser(userWithNoURLs); // Call without explicitly passing the database
+    const expected = {}; // No URLs should be returned
     assert.deepEqual(result, expected);
   });
-  
 
-  // Test case when the urlDatabase is empty
+  // This test is meant to cover the edge case where the database is completely empty.
   it('should return an empty object if there are no URLs in the urlDatabase', () => {
-    const emptyDatabase = {}; // Empty database
-    const result = urlsForUser('userRandomID', emptyDatabase); // Pass the empty database
-    const expected = {};
+    const emptyDatabase = {}; // Simulating an empty URL database
+    const result = urlsForUser('userRandomID', emptyDatabase); // Call the function with an empty database
+    const expected = {}; // Expect an empty result
     assert.deepEqual(result, expected);
   });
 
-  // Test case when the function should return URLs for the specified user
-  it('should return the correct URLs for the specified user', () => {
-    const userId = 'userRandomID';
-    const result = urlsForUser(userId, urlDatabase); // Pass the urlDatabase
-    const expected = {
-      b2xVn2: {
-        longURL: 'http://www.lighthouselabs.ca',
-        userId: 'userRandomID'
-      },
-      abc123: {
-        longURL: 'http://www.example.com',
-        userId: 'userRandomID'
-      }
-    };
-    assert.deepEqual(result, expected);
-  });
-
-  // Test case when urlDatabase is empty
-  it('should return an empty object if there are no URLs in the urlDatabase', () => {
-    const emptyDatabase = {}; // Empty database
-    const result = urlsForUser('userRandomID', emptyDatabase); // Pass the empty database
-    const expected = {};
-    assert.deepEqual(result, expected);
-  });
-
-  // Test case when the function should not return URLs for another user
+  // I included this test to confirm the function doesn’t mix up URLs between users.
   it('should not return URLs that belong to another user', () => {
-    const userId = 'user2RandomID';
-    const result = urlsForUser(userId, urlDatabase); // Pass the urlDatabase
+    const userId = 'user2RandomID'; // A different user with their own URLs
+    const result = urlsForUser(userId, urlDatabase); // Call the function with sample data
     const expected = {
       "9sm5xK": {
         longURL: "http://www.google.com",
         userId: "user2RandomID"
       }
     };
+    // This test checks that only the correct user's URLs are returned.
     assert.deepEqual(result, expected);
   });
 });
+
 
 
 

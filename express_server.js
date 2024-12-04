@@ -1,3 +1,10 @@
+// express_server.js
+// This file sets up and runs the Express web server for the TinyApp project.
+// It handles user authentication, URL shortening, and management of user-specific URLs.
+// Users can register, log in, and manage their personalized short URLs. 
+// The app uses sessions to track user login state, bcrypt for password security, 
+// and EJS for rendering dynamic views.
+
 const express = require("express");
 const session = require("express-session");
 const bcrypt = require("bcryptjs");
@@ -9,23 +16,23 @@ const {
   comparePasswords,
   generateRandomString,
   users,
-  urlDatabase  // Import urlDatabase
+  urlDatabase  // I used this to manage the URLs associated with users
 } = require("./helpers");
 
 const app = express();
 const PORT = 8080;
 
-// Set the view engine to EJS
+// Set the view engine to EJS for rendering dynamic views
 app.set("view engine", "ejs");
 
-// Body parser for form data
+// I added body parser middleware to handle form data
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Session configuration
+// I set up session configuration to track user login state
 app.use(
   session({
-    secret: "a secret key",  // It's good practice to use an actual secret key in production
+    secret: "a secret key",  // In production, I'd replace this with a proper secret key
     resave: false,
     saveUninitialized: true,
   })
@@ -34,7 +41,7 @@ app.use(
 // Middleware to check if user is logged in
 const checkUserLoggedIn = (req, res, next) => {
   if (!req.session.user_id) {
-    return res.redirect("/login");
+    return res.redirect("/login");  // I used this to ensure only logged-in users can access certain routes
   }
   next();
 };
@@ -42,162 +49,173 @@ const checkUserLoggedIn = (req, res, next) => {
 // Middleware to attach user info to the response object
 const setUserInfo = (req, res, next) => {
   if (req.session.user_id) {
-    const user = getUserById(req.session.user_id, users);  // Add user info to response locals
+    const user = getUserById(req.session.user_id, users);  // I used this to fetch user data from the database
     if (user) {
-      res.locals.user = user;
+      res.locals.user = user;  // I added the user data to locals for easy access in templates
     }
   }
   next();
 };
 
-// Use the middleware
+// Use the middleware to ensure user data is available for every request
 app.use(setUserInfo);
 
 // Routes
 
 // Home page route
 app.get("/", (req, res) => {
-  res.redirect("/urls");
+  res.redirect("/urls");  // I did this to redirect users to their URLs page when accessing the homepage
 });
 
 // Show the "Create New URL" page
 app.get("/urls/new", checkUserLoggedIn, (req, res) => {
-  res.render("urls_new", { userEmail: res.locals.user.email });
+  res.render("urls_new", { userEmail: res.locals.user.email });  // I used this to pass the logged-in user's email to the template
 });
 
-// Show URLs page
+// Show URLs page for the logged-in user
 app.get("/urls", checkUserLoggedIn, (req, res) => {
-  const userId = req.session.user_id; // Get user ID from the session
-  console.log("User ID in session:", userId);  // Log to check if the session ID is correct
+  const userId = req.session.user_id;  // I retrieved the user ID from the session to personalize the URL list
+  console.log("User ID in session:", userId);  // I used this log to verify that the session is being tracked properly
 
-  // If user is not logged in, redirect to login page
   if (!userId) {
-    return res.redirect("/login");
+    return res.redirect("/login");  // I added this check to redirect users who aren't logged in
   }
 
-  // Retrieve the URLs for the logged-in user
-  const userUrls = urlsForUser(userId, urlDatabase);
-  console.log("User's URLs:", userUrls);  // Log the URLs to verify
+  const userUrls = urlsForUser(userId, urlDatabase);  // I used this function to retrieve URLs associated with the logged-in user
+  console.log("User's URLs:", userUrls);  // I logged the URLs for debugging purposes
 
-  // Render the page with the user's URLs
   res.render("urls_index", {
-    userEmail: res.locals.user.email,  // Ensure this is correctly set
-    urls: userUrls
+    userEmail: res.locals.user.email,  // I passed the user's email to the template
+    urls: userUrls  // I passed the user's URLs to display them on the page
   });
 });
 
-
-
 // Show login page
 app.get("/login", (req, res) => {
-  res.render("login", { userEmail: res.locals.user ? res.locals.user.email : null });
+  res.render("login", { userEmail: res.locals.user ? res.locals.user.email : null });  // I did this to display the logged-in user's email if they're already logged in
 });
 
 // Show registration page
 app.get("/register", (req, res) => {
-  res.render("register", { userEmail: res.locals.user ? res.locals.user.email : null });
+  res.render("register", { userEmail: res.locals.user ? res.locals.user.email : null });  // I used this to show the user's email if logged in
 });
 
 // Register a new user
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
 
-  // Check if email is already registered
+  // I did this to check if the email is already registered in the system
   if (getUserByEmail(email, users)) {
-    return res.status(400).send("Email already registered.");
+    return res.status(400).send("Email already registered.");  // I used this to prevent multiple accounts with the same email
   }
 
-  // Generate a new user ID
-  const newUserId = generateRandomString();
+  const newUserId = generateRandomString();  // I generated a new random user ID
+  const hashedPassword = hashPassword(password);  // I hashed the password to store it securely
 
-  // Hash the password before saving
-  const hashedPassword = hashPassword(password);
-
-  // Add new user to the users object
+  // I added the new user to the users object
   users[newUserId] = {
     id: newUserId,
     email: email,
     password: hashedPassword,
   };
 
-  // Set the session for the logged-in user
-  req.session.user_id = newUserId;
+  req.session.user_id = newUserId;  // I set the session for the newly registered user
 
-  // Redirect to URLs page
-  res.redirect("/urls");
+  res.redirect("/urls");  // I redirected the user to their URLs page after successful registration
 });
 
 // Login route
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
-  // Find user by email
-  const user = getUserByEmail(email, users);
+  const user = getUserByEmail(email, users);  // I retrieved the user by email from the database
 
-  // If no user found or invalid password, send error
+  // I used this to validate the credentials, checking if the email exists and if the password is correct
   if (!user || !comparePasswords(password, user.password)) {
-    return res.status(403).send("Invalid email or password.");
+    return res.status(403).send("Invalid email or password.");  // I returned an error message if the credentials were incorrect
   }
 
-  // Set the session with the user ID
-  req.session.user_id = user.id;
-  console.log("Logged in user ID:", req.session.user_id);  // Check if session is set
+  req.session.user_id = user.id;  // I set the session ID after a successful login
+  console.log("Logged in user ID:", req.session.user_id);  // I logged the session ID for debugging purposes
 
-  // Redirect to the URLs page after successful login
-  res.redirect("/urls");
+  res.redirect("/urls");  // I redirected the user to their URLs page after logging in
 });
 
 // Logout route
 app.post("/logout", (req, res) => {
-  req.session.destroy((err) => {
+  req.session.destroy((err) => {  // I used this to destroy the session when the user logs out
     if (err) {
-      return res.status(500).send("Error logging out.");
+      return res.status(500).send("Error logging out.");  // I handled potential errors during logout
     }
-    res.redirect("/login");
+    res.redirect("/login");  // I redirected the user to the login page after logging out
   });
 });
 
 // URL show route
 app.get("/urls/:id", checkUserLoggedIn, (req, res) => {
-  const url = urlDatabase[req.params.id]; // Retrieve URL from the database
+  const url = urlDatabase[req.params.id];  // I retrieved the URL by its short ID
+
+  // I did this to check if the URL exists and handle errors when it's not found
   if (!url) {
-    return res.status(404).send("URL not found");
+    return res.status(404).send("URL not found");  // I returned a 404 error if the URL does not exist
   }
 
-  res.render("urls_show", { id: req.params.id, longURL: url.longURL });
+  res.render("urls_show", { 
+    id: req.params.id, 
+    longURL: url.longURL,  // I passed the long URL to display it
+    userEmail: res.locals.user.email  // I passed the user's email to the template for display
+  });
 });
 
 // URL edit route
 app.post("/urls/:id", checkUserLoggedIn, (req, res) => {
   const { longURL } = req.body;
 
-  const url = urlDatabase[req.params.id]; // Retrieve the URL from the database
+  const url = urlDatabase[req.params.id];  // I retrieved the URL from the database
+
+  // I did this to check if the user is authorized to edit the URL
   if (!url || url.userId !== req.session.user_id) {
-    return res.status(403).send("You are not authorized to edit this URL.");
+    return res.status(403).send("You are not authorized to edit this URL.");  // I blocked unauthorized access
   }
 
-  // Update URL in the database
-  url.longURL = longURL;
+  url.longURL = longURL;  // I updated the long URL associated with the short URL
 
-  res.redirect("/urls");
+  res.redirect("/urls");  // I redirected the user to their URL list after updating the URL
 });
 
 // Add new URL (POST request)
 app.post("/urls", checkUserLoggedIn, (req, res) => {
-  const shortURL = generateRandomString(); // Generate new short URL
-  const { longURL } = req.body; // Get the long URL from the form
+  const shortURL = generateRandomString();  // I generated a new short URL
+  const { longURL } = req.body;  // I retrieved the long URL from the user's input
 
-  // Add the new URL to the database
+  // I added the new URL to the database and associated it with the logged-in user
   urlDatabase[shortURL] = {
     longURL: longURL,
-    userId: req.session.user_id
+    userId: req.session.user_id  // I associated the URL with the logged-in user's ID
   };
 
-  res.redirect("/urls");  // Redirect to URLs page after adding new URL
+  res.redirect("/urls");  // I redirected the user to their URL list after adding the new URL
+});
+
+// DELETE URL route (Add this)
+app.post("/urls/:id/delete", checkUserLoggedIn, (req, res) => {
+  const url = urlDatabase[req.params.id];  // I retrieved the URL by its short ID
+
+  // I did this to check if the URL exists and ensure the user is authorized to delete it
+  if (!url || url.userId !== req.session.user_id) {
+    return res.status(403).send("You are not authorized to delete this URL.");  // I blocked unauthorized deletion
+  }
+
+  delete urlDatabase[req.params.id];  // I deleted the URL from the database
+
+  res.redirect("/urls");  // I redirected the user to the URLs page after deletion
 });
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`TinyApp listening on port ${PORT}!`);
+  console.log(`TinyApp listening on port ${PORT}!`);  // I logged the port to confirm the server is running
 });
+
+
+
 

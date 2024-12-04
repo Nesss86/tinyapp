@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Character encoding for proper text display -->
     <meta charset="UTF-8" />
+    <!-- Ensure proper scaling on mobile devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Page title -->
     <title>Login</title>
     
-    <!-- Include Bootstrap CSS (for styling) -->
+    <!-- Include Bootstrap CSS for responsive styling -->
     <link
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
       rel="stylesheet"
@@ -15,13 +18,17 @@
   </head>
   <body>
     
-    <!-- Include header partial -->
+    <!-- Include the shared header partial -->
     <%- include('partials/_header', { userEmail: userEmail }) %>
+    <!-- Passing the `userEmail` variable ensures the header can display personalized info -->
 
     <div class="container mt-4">
+      <!-- Page heading -->
       <h2>Login</h2>
+      <!-- Login form that sends a POST request to the server -->
       <form method="POST" action="/login">
         <div class="form-group">
+          <!-- Input for email address -->
           <label for="email">Email:</label>
           <input
             type="email"
@@ -33,6 +40,7 @@
           />
         </div>
         <div class="form-group">
+          <!-- Input for password -->
           <label for="password">Password:</label>
           <input
             type="password"
@@ -43,10 +51,12 @@
             required
           />
         </div>
+        <!-- Submit button to trigger the login -->
         <button type="submit" class="btn btn-primary">Login</button>
       </form>
     </div>
   </body>
 </html>
+
 
 

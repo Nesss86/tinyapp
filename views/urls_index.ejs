@@ -1,31 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Character encoding for proper text display -->
     <meta charset="utf-8" />
+    <!-- Enables responsive design for mobile and other devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <!-- Page title -->
     <title>TinyApp</title>
   </head>
   <body>
-    <!-- Include Header Partial with userEmail passed in -->
-    <%- include('partials/_header', { userEmail: userEmail }) %> 
+    <!-- Include Header Partial with user information -->
+    <%- include('partials/_header', { userEmail: userEmail }) %>
+    <!-- Passing `userEmail` allows the header to display the logged-in user's email -->
 
     <main style="margin: 1em;">
+      <!-- Page heading for URL management -->
       <h3>My URLs</h3>
+      
+      <!-- Table displaying short and long URLs, along with actions -->
       <table class="table">
         <thead>
           <tr>
+            <!-- Table headers for short URL ID, long URL, and actions -->
             <th scope="col">Short URL ID</th>
             <th scope="col">Long URL</th>
             <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>
+          <!-- Iterate through the `urls` object to display each URL -->
           <% for (let id in urls) { %>
             <tr>
+              <!-- Display the short URL ID -->
               <td><%= id %></td>
+              <!-- Display the corresponding long URL -->
               <td><%= urls[id].longURL %></td> <!-- Access longURL property here -->
               <td>
+                <!-- Button to edit the selected URL -->
                 <a href="/urls/<%= id %>" class="btn btn-warning btn-sm">Edit</a>
+                <!-- Form to delete the selected URL -->
                 <form method="POST" action="/urls/<%= id %>/delete" style="display: inline;">
                   <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                 </form>
@@ -34,8 +47,10 @@
           <% } %>
         </tbody>
       </table>
-      <!-- Add link to shorten a new URL -->
+      
+      <!-- Button linking to the URL creation page -->
       <a href="/urls/new" class="btn btn-primary mt-3">Shorten a New URL</a>
     </main>
   </body>
 </html>
+
