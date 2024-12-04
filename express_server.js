@@ -3,6 +3,7 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 8080; // Default port 8080
+require('dotenv').config();
 
 // Users database
 const users = {
@@ -29,13 +30,9 @@ function generateRandomString() {
   return randomString;
 }
 
+// Optimized getUserByEmail function
 function getUserByEmail(email) {
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      return users[userId];
-    }
-  }
-  return null;
+  return Object.values(users).find(user => user.email === email) || null;
 }
 
 function getUserById(id) {
@@ -45,7 +42,7 @@ function getUserById(id) {
 function urlsForUser(id) {
   const userUrls = {};
   for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
+    if (urlDatabase[shortURL].userId === id) {
       userUrls[shortURL] = urlDatabase[shortURL];
     }
   }
@@ -71,13 +68,19 @@ function comparePasswords(plainPassword, hashedPassword) {
 }
 
 app.use(express.urlencoded({ extended: true }));
-app.use(
-  cookieSession({
-    name: 'session',
-    keys: ['secretKey1', 'secretKey2'], // Replace with secure keys in production
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  })
-);
+app.use((req, res, next) => {
+  try {
+    app.use(cookieSession({
+      name: 'session',
+      keys: [process.env.COOKIE_SECRET], // Use environment variable for secret keys
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }));
+    next(); // Proceed to the next middleware
+  } catch (error) {
+    console.error("Session Error: ", error);
+    res.status(500).send("There was an issue with session handling.");
+  }
+});
 app.set("view engine", "ejs");
 app.use(express.static('public'));
 
@@ -212,5 +215,3 @@ app.get('/register', (req, res) => {
   }
   res.render('register', { userEmail: null });
 });
-
-
