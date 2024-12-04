@@ -9,8 +9,12 @@ const comparePasswords = (plainPassword, hashedPassword) => {
 };
 
 const getUserByEmail = (email, userDatabase) => {
+  if (!userDatabase) {
+    throw new Error("User database is not defined");
+  }
   return Object.values(userDatabase).find(user => user.email === email);
 };
+
 
 const getUserById = (id, userDatabase) => {
   return userDatabase[id];

@@ -42,7 +42,10 @@ const checkUserLoggedIn = (req, res, next) => {
 // Middleware to attach user info to the response object
 const setUserInfo = (req, res, next) => {
   if (req.session.user_id) {
-    res.locals.user = getUserById(req.session.user_id);  // Add user info to response locals
+    const user = getUserById(req.session.user_id, users);  // Add user info to response locals
+    if (user) {
+      res.locals.user = user;
+    }
   }
   next();
 };
@@ -62,15 +65,28 @@ app.get("/urls/new", checkUserLoggedIn, (req, res) => {
   res.render("urls_new", { userEmail: res.locals.user.email });
 });
 
-
 // Show URLs page
 app.get("/urls", checkUserLoggedIn, (req, res) => {
-  const userUrls = urlsForUser(req.session.user_id);  // Get URLs using helper function
+  const userId = req.session.user_id; // Get user ID from the session
+  console.log("User ID in session:", userId);  // Log to check if the session ID is correct
+
+  // If user is not logged in, redirect to login page
+  if (!userId) {
+    return res.redirect("/login");
+  }
+
+  // Retrieve the URLs for the logged-in user
+  const userUrls = urlsForUser(userId, urlDatabase);
+  console.log("User's URLs:", userUrls);  // Log the URLs to verify
+
+  // Render the page with the user's URLs
   res.render("urls_index", {
-    userEmail: res.locals.user.email, // Get email using the user info stored in locals
+    userEmail: res.locals.user.email,  // Ensure this is correctly set
     urls: userUrls
   });
 });
+
+
 
 // Show login page
 app.get("/login", (req, res) => {
@@ -87,7 +103,7 @@ app.post("/register", (req, res) => {
   const { email, password } = req.body;
 
   // Check if email is already registered
-  if (getUserByEmail(email)) {
+  if (getUserByEmail(email, users)) {
     return res.status(400).send("Email already registered.");
   }
 
@@ -116,7 +132,7 @@ app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
   // Find user by email
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
 
   // If no user found or invalid password, send error
   if (!user || !comparePasswords(password, user.password)) {
@@ -125,6 +141,7 @@ app.post("/login", (req, res) => {
 
   // Set the session with the user ID
   req.session.user_id = user.id;
+  console.log("Logged in user ID:", req.session.user_id);  // Check if session is set
 
   // Redirect to the URLs page after successful login
   res.redirect("/urls");
