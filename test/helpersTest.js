@@ -26,4 +26,10 @@ describe('getUserByEmail', function() {
     const user = getUserByEmail("nonexistant@example.com", testUsers);
     assert.strictEqual(user, undefined);
   });
+
+  it('should return a user with the correct email', function() {
+    const user = getUserByEmail("[email protected]", testUsers);
+    const expectedEmail = "[email protected]";
+    assert.equal(user.email, expectedEmail);
+  });
 });
