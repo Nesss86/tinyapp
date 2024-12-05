@@ -1,6 +1,6 @@
 // express_server.js
 // This file sets up and runs the Express web server for the TinyApp project.
-// It handles user authentication, URL shortening, and management of user-specific URLs.
+// It handles user authentication, URL shortening, and management of user-specific URLs. 
 // Users can register, log in, and manage their personalized short URLs. 
 // The app uses sessions to track user login state, bcrypt for password security, 
 // and EJS for rendering dynamic views.
@@ -29,6 +29,9 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+// Use a static directory for serving images and other assets
+app.use(express.static('public'));
+
 // I set up session configuration to track user login state
 app.use(
   session({
@@ -50,9 +53,9 @@ const checkUserLoggedIn = (req, res, next) => {
 const setUserInfo = (req, res, next) => {
   if (req.session.user_id) {
     const user = getUserById(req.session.user_id, users);  // I used this to fetch user data from the database
-    if (user) {
-      res.locals.user = user;  // I added the user data to locals for easy access in templates
-    }
+    res.locals.user = user || null;  // If user isn't found, set to null
+  } else {
+    res.locals.user = null;
   }
   next();
 };
@@ -64,12 +67,13 @@ app.use(setUserInfo);
 
 // Home page route
 app.get("/", (req, res) => {
-  res.redirect("/urls");  // I did this to redirect users to their URLs page when accessing the homepage
+  // Render the homepage, passing the userEmail if logged in
+  res.render("home", { userEmail: res.locals.user ? res.locals.user.email : null });
 });
 
 // Show the "Create New URL" page
 app.get("/urls/new", checkUserLoggedIn, (req, res) => {
-  res.render("urls_new", { userEmail: res.locals.user.email });  // I used this to pass the logged-in user's email to the template
+  res.render("urls_new", { userEmail: res.locals.user ? res.locals.user.email : null });
 });
 
 // Show URLs page for the logged-in user
@@ -85,19 +89,19 @@ app.get("/urls", checkUserLoggedIn, (req, res) => {
   console.log("User's URLs:", userUrls);  // I logged the URLs for debugging purposes
 
   res.render("urls_index", {
-    userEmail: res.locals.user.email,  // I passed the user's email to the template
-    urls: userUrls  // I passed the user's URLs to display them on the page
+    userEmail: res.locals.user ? res.locals.user.email : null,
+    urls: userUrls
   });
 });
 
 // Show login page
 app.get("/login", (req, res) => {
-  res.render("login", { userEmail: res.locals.user ? res.locals.user.email : null });  // I did this to display the logged-in user's email if they're already logged in
+  res.render("login", { userEmail: res.locals.user ? res.locals.user.email : null });
 });
 
 // Show registration page
 app.get("/register", (req, res) => {
-  res.render("register", { userEmail: res.locals.user ? res.locals.user.email : null });  // I used this to show the user's email if logged in
+  res.render("register", { userEmail: res.locals.user ? res.locals.user.email : null });
 });
 
 // Register a new user
@@ -106,7 +110,7 @@ app.post("/register", (req, res) => {
 
   // I did this to check if the email is already registered in the system
   if (getUserByEmail(email, users)) {
-    return res.status(400).send("Email already registered.");  // I used this to prevent multiple accounts with the same email
+    return res.status(400).send("Email already registered.");
   }
 
   const newUserId = generateRandomString();  // I generated a new random user ID
@@ -132,7 +136,7 @@ app.post("/login", (req, res) => {
 
   // I used this to validate the credentials, checking if the email exists and if the password is correct
   if (!user || !comparePasswords(password, user.password)) {
-    return res.status(403).send("Invalid email or password.");  // I returned an error message if the credentials were incorrect
+    return res.status(403).send("Invalid email or password.");
   }
 
   req.session.user_id = user.id;  // I set the session ID after a successful login
@@ -147,7 +151,7 @@ app.post("/logout", (req, res) => {
     if (err) {
       return res.status(500).send("Error logging out.");  // I handled potential errors during logout
     }
-    res.redirect("/login");  // I redirected the user to the login page after logging out
+    res.redirect("/");  // Redirecting to the homepage instead of the login page now
   });
 });
 
@@ -157,13 +161,13 @@ app.get("/urls/:id", checkUserLoggedIn, (req, res) => {
 
   // I did this to check if the URL exists and handle errors when it's not found
   if (!url) {
-    return res.status(404).send("URL not found");  // I returned a 404 error if the URL does not exist
+    return res.status(404).send("URL not found");
   }
 
   res.render("urls_show", { 
     id: req.params.id, 
-    longURL: url.longURL,  // I passed the long URL to display it
-    userEmail: res.locals.user.email  // I passed the user's email to the template for display
+    longURL: url.longURL,
+    userEmail: res.locals.user ? res.locals.user.email : null 
   });
 });
 
@@ -175,7 +179,7 @@ app.post("/urls/:id", checkUserLoggedIn, (req, res) => {
 
   // I did this to check if the user is authorized to edit the URL
   if (!url || url.userId !== req.session.user_id) {
-    return res.status(403).send("You are not authorized to edit this URL.");  // I blocked unauthorized access
+    return res.status(403).send("You are not authorized to edit this URL.");
   }
 
   url.longURL = longURL;  // I updated the long URL associated with the short URL
@@ -203,7 +207,7 @@ app.post("/urls/:id/delete", checkUserLoggedIn, (req, res) => {
 
   // I did this to check if the URL exists and ensure the user is authorized to delete it
   if (!url || url.userId !== req.session.user_id) {
-    return res.status(403).send("You are not authorized to delete this URL.");  // I blocked unauthorized deletion
+    return res.status(403).send("You are not authorized to delete this URL.");
   }
 
   delete urlDatabase[req.params.id];  // I deleted the URL from the database
@@ -215,6 +219,7 @@ app.post("/urls/:id/delete", checkUserLoggedIn, (req, res) => {
 app.listen(PORT, () => {
   console.log(`TinyApp listening on port ${PORT}!`);  // I logged the port to confirm the server is running
 });
+
 
 
 

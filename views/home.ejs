@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TinyApp - Home</title>
+</head>
+<body>
+  <!-- Include the same header partial that other views use -->
+  <%- include('partials/_header') %>
+
+  <main style="text-align: center; margin-top: 2em;">
+    <h1>Welcome to TinyApp!</h1>
+    <p>
+      TinyApp helps you shorten long URLs into easily manageable short links.  
+      Register or log in to get started!
+    </p>
+
+    <!-- Embed your image: ensure the path matches where you placed the image in `public` folder -->
+    <img src="/images/tinyapp-toddler-superhero.jpg" alt="TinyApp" style="max-width: 100%; height: auto; margin-top: 1em;">
+  </main>
+</body>
+</html>
