@@ -50,6 +50,8 @@ Users are able to see all of their shortened URL's and have the option to edit o
 - EJS
 - bcryptjs
 - cookie-session
+- dotenv
+- express-session
 
 ## Getting Started
 
