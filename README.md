@@ -4,7 +4,7 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
-<img src="images/Homepage.png" alt="Homepage">
+<img src="public/images/Homepage.png" alt="Homepage">
 <img src="images/EDA.png" alt="Tableau Desktop">
 <img src="images/EDA.png" alt="Tableau Desktop">
 <img src="images/EDA.png" alt="Tableau Desktop">
