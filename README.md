@@ -11,7 +11,7 @@ The first page users will see and where they will be redirected to when logged o
 
 #### Register
 
-Where the new user can go to register using and email and password which is kept secure.
+Where the new user can go to register using an email and password which is kept secure.
 <img src="public/images/Register.png" alt="Register">
 
 
