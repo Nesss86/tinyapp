@@ -168,6 +168,7 @@ app.post("/login", (req, res) => {
 // Logout route
 app.post("/logout", (req, res) => {
   req.session = null;
+  res.clearCookie("session");
   res.redirect("/login");
 });
 
