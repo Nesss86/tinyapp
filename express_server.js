@@ -88,6 +88,18 @@ app.get("/", (req, res) => {
   res.render("home", { userEmail: res.locals.user ? res.locals.user.email : null });
 });
 
+// Redirect short URL to long URL
+app.get("/u/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const urlEntry = urlDatabase[shortURL];
+
+  if (!urlEntry) {
+    return res.status(404).send("Short URL not found");
+  }
+
+  res.redirect(urlEntry.longURL);
+});
+
 // Show the "Create New URL" page
 app.get("/urls/new", checkUserLoggedIn, (req, res) => {
   res.render("urls_new", { userEmail: res.locals.user ? res.locals.user.email : null });
@@ -229,6 +241,7 @@ app.post("/urls/:id/delete", checkUserLoggedIn, (req, res) => {
 app.listen(PORT, () => {
   console.log(`TinyApp listening on port ${PORT}!`); 
 });
+
 
 
 
