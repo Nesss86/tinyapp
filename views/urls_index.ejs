@@ -31,8 +31,10 @@
           <!-- Iterate through the `urls` object to display each URL -->
           <% for (let id in urls) { %>
             <tr>
-              <!-- Display the short URL ID -->
-              <td><%= id %></td>
+              <!-- Display the short URL ID as a clickable link -->
+              <td>
+                <a href="/u/<%= id %>" target="_blank"><%= id %></a>
+              </td>
               <!-- Display the corresponding long URL -->
               <td><%= urls[id].longURL %></td> <!-- Access longURL property here -->
               <td>
@@ -53,6 +55,7 @@
     </main>
   </body>
 </html>
+
 
 
 
